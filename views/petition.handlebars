@@ -1,0 +1,20 @@
+
+<body>
+
+
+    <h1> Welcome to the petition </h1>
+    <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Iste vel sunt iusto, accusantium recusandae amet itaque libero est, rerum facilis minima inventore odio fugiat officia mollitia quasi? Illo, repellat suscipit!</p>
+
+<form  method="post"id="signature-form">
+  <label for="firstname">First name:</label><br>
+  <input type="text" id="firstname" name="firstname"><br>
+  <label for="lastname">Last name:</label><br>
+  <input type="text" id="lastname" name="lastname"><br>
+    <input type="hidden" name="hiddenField" id="hiddenField">
+  <canvas id="canvas" width="600" height="100"></canvas>
+<input type="submit" value="Submit" name="submit" class="submit" id="submit" />
+  {{!-- security inportant for all forms --}}
+  <input type="hidden" name="_csrf" value="{{csrfToken}}">
+</form> 
+
+</body>
