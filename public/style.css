@@ -3,6 +3,39 @@
 }
 body {
     margin: 0;
+    font-family: helvetica;
+}
+h1 {
+    font-size: 3em;
+    color: #008b8b8f;
+}
+h3 {
+    padding: 1%;
+    margin: 3%;
+}
+img {
+    min-height: 2em;
+}
+section {
+    margin: 4%;
+    background-color: white;
+    padding-top: 3%;
+    padding-bottom: 5%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+section#form {
+    padding-bottom: 2em;
+    background-color: whitesmoke;
+    padding-left: 2%;
+    color: #008b8b8f;
+}
+#explain {
+    display: flex;
+    flex-direction: column;
+    padding: 2%;
 }
 canvas {
     border: 1px dotted blue;
@@ -12,4 +45,20 @@ canvas {
 .container {
     width: 80%;
     text-align: center;
+}
+
+#submit {
+    padding: 1em;
+    background-color: darkcyan;
+    color: white;
+    font-size: larger;
+    margin: 2em;
+    cursor: pointer;
+}
+footer {
+    background-color: #008b8b8f;
+    color: darkgray;
+    padding: 1em;
+    position: absolute;
+    bottom: 0;
 }
