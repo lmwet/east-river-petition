@@ -1,30 +1,33 @@
 
 <body>
 
+
 <section class="description">
 
     <h1> SAVE EAST RIVER PARK </h1>
      {{#if error_message }}
-   <p style="color: rgb(255, 0, 200); font-size:46px;"> Error happened in the signing process. You are welcome to proceed again. Don't worry, you'll make it! Maybe you just forgot to sign?</p>
+   <p style="color: rgb(255, 0, 200); font-size:46px;"> OUPS! An error occured in the registering process. Make sure your password is valid and secure! </p>
    {{/if}}
     
     <div id='explain'>
-            <img src="eastRiverPark.png">
+            <img src="./images/eastRiverPark.png">
     <h3>Don't kill our park for a bad flood plan</h3>
-    <p>New York City will demolish a big, wonderful park in the name of flood control. There are better plans. Signe this petition to make the City Council step Back and go back to the old plan!  </p>
+    <p>New York City will demolish a big, wonderful park in the name of flood control. There are better plans. 
+        <p style="color: #008b8b8f" >Signe this petition to make the City go back to the original plan elaborated by the community. </p>
     <p>We live in the un-trendy, un-rich, un-touristy, homely high-rise, crowded eastern side of the Lower East Side/East Village neighborhood of Manhattan. Our language might not be English, our incomes might not be decent, but we possess something wonderful that no one else has. We must cross footbridges with high chain link fences over the noisy, polluted six-lanes of the FDR Drive to go to it, but we do. Because we come to our East River Park, a big, open, lovely, free place that makes us feel privileged. We play ball, our kids play ball. We picnic and barbeque and dance and lounge around in the shade. We forage. We sit on benches and breathe the fresh air, so unlike the haze in our streets. We walk and talk and bike and fish and play. Along the one and half mile promenade we lean on the railings and watch the tides swoop in and out. </p>
 </div>
 </section>
-<section class="form">
-<form  method="post"id="signature-form">
 
-    <input type="hidden" name="hiddenField" id="hiddenField" value="">
-    <label for="signature">Please signe here:</label>:</label><br>
-  <canvas id="canvas" width="600" height="100"></canvas>
-  <input name="tstamp" id="hidden-tstamp" type="hidden">
-<input type="submit" value="Submit" name="submit" class="submit" id="submit" />
-  {{!-- security inportant for all forms --}}
-  <input type="hidden" name="_csrf" value="{{csrfToken}}">
-</form> 
+<section class="form">
+    <form method="post" id="register-form">
+  <label for="firstname">First name:</label><br>
+  <input type="text" id="firstname" name="firstname"><br><br>
+  <label for="lastname">Last name:</label><br>
+  <input type="text" id="lastname" name="lastname"><br><br>
+  <label for="email">Email:</label><br>
+  <input type="email" id="email" name="email"><br><br>
+    <label for="password">Password:</label><br>
+  <input type="text" id="password" name="password"><br><br>
+  <input type="submit" value="Submit" name="sign_up" class="submit" id="sign_up" />
+  </form>
 </section>
-</body>

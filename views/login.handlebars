@@ -1,0 +1,18 @@
+<section class="description">
+
+    <h1> SAVE EAST RIVER PARK </h1>
+    <h3> Please log in to the East River Petition </h3>
+     {{#if error_message }}
+   <p style="color: rgb(255, 0, 200); font-size:46px;"> OUPS! An error occured in the log in process. Make sure your password and email is valid! </p>
+   {{/if}}
+
+</section>
+
+<section class="form">
+
+  <label for="email">Email:</label><br>
+  <input type="email" id="email" name="email"><br><br>
+    <label for="password">Password:</label><br>
+  <input type="text" id="password" name="password"><br><br>
+  <input type="submit" value="Log in" name="login" class="submit" id="login" />
+</section>

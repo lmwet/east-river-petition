@@ -24,18 +24,20 @@ section {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: flex-end;
 }
-section#form {
+.form {
     padding-bottom: 2em;
     background-color: whitesmoke;
-    padding-left: 2%;
+    padding: 5%;
     color: #008b8b8f;
+    display: flex;
+    flex-direction: column;
 }
 #explain {
     display: flex;
     flex-direction: column;
     padding: 2%;
+    align-items: flex-start;
 }
 canvas {
     border: 1px dotted blue;
@@ -47,7 +49,7 @@ canvas {
     text-align: center;
 }
 
-#submit {
+.submit {
     padding: 1em;
     background-color: darkcyan;
     color: white;

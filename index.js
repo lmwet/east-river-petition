@@ -1,10 +1,11 @@
 const express = require("express");
 const app = express();
-const db = require("./db");
+const db = require("./utils/db.js");
 const cookieParser = require("cookie-parser");
 const csurf = require("csurf");
 const hb = require("express-handlebars");
 const cookieSession = require("cookie-session");
+const { hash, compare } = require("./utils/bcrypt");
 
 app.engine("handlebars", hb());
 app.set("view engine", "handlebars");
@@ -50,8 +51,82 @@ app.use((req, res, next) => {
         next();
     }
 });
-//////////// ROUTES ////////////
 
+//////////// ROUTES ////////////
+// Home route is checking on cookiesession and redirecting
+app.get("/", (req, res) => {
+    console.log("GET / ROUTE REDIRECTING TO / REGISTER");
+    // if cookieSession.oebwowubgr
+    res.redirect("/register");
+});
+
+////////////////////////////////////// REGISTER AND LOGIN //////////////////////////////////////
+
+// GET REGISTER
+app.get("/register", (req, res) => {
+    console.log("made it into register route");
+
+    res.render("register", {
+        layout: "main",
+        title: "Sign-up"
+    });
+});
+
+//POST REGISTER and remembering the user in cookiesession
+app.post("/register", (req, res) => {
+    const first = req.body.first;
+    const last = req.body.last;
+    const email = req.body.email;
+    const password = req.body.password;
+
+    //hashing and salting the passwords
+    hash(password)
+        .then(hashedPw => {
+            console.log("hashedPW", hashedPw);
+            // res.sendStatus(200); ???
+            // here do cookiesession stuff to keep track of user_id-pw
+
+            //saving users data to users table in petition db
+            db.addUser(first, last, email, hashedPw)
+                .then(data => {
+                    const user = data.rows[0];
+                    console.log("registered user", user);
+                    res.redirect("/petition");
+                })
+                .catch(e => {
+                    console.log("error in Post register in hash", e);
+                    res.render("register", {
+                        layout: "main",
+                        error_message: true,
+                        title: "Sign Up Error"
+                    });
+                });
+        })
+        .catch(e => {
+            console.log("error in Post register in hash", e);
+            res.sendStatus(500);
+
+            res.render("register", {
+                layout: "main",
+                error_message: true,
+                title: "Sign Up Error"
+            });
+        });
+});
+
+// GET LOGIN
+app.get("/login", (req, res) => {
+    console.log("made it into login route");
+
+    res.render("login", {
+        layout: "main",
+        title: "Login"
+    });
+});
+
+//POST LOGIN TO BE DONE HERE
+
+// GET PETITION: signing page
 //always renders petition.handlebars with no error
 app.get("/petition", (req, res) => {
     console.log("petition home route runnin");
@@ -62,22 +137,16 @@ app.get("/petition", (req, res) => {
     });
 });
 
-//post request to /petition
-//save date into db
+// POST PETITION
+//save data into db
 app.post("/petition", (req, res) => {
-    console.log("-----------");
     console.log("ran post petition route");
-    console.log("-----------");
-
-    const first = req.body.firstname;
-    const last = req.body.lastname;
+    const user_id = req.body.user_id;
     const signature = req.body.hiddenField;
-    // const log = req.body.tstamp;
-    // console.log("signature", req.body.tstamp);
 
-    db.addSigner(first, last, signature)
+    db.addSigner(user_id, signature)
         .then(data => {
-            console.log("data object from post request", data.rows);
+            console.log("data object from addsigner", data.rows);
             //setting cookie to remember the users signature
             req.session.signatureId = data.rows[0].id;
             res.redirect("/thanks");
@@ -87,11 +156,12 @@ app.post("/petition", (req, res) => {
             res.render("petition", {
                 layout: "main",
                 error_message: true,
-                title: "Petition"
+                title: "Petition-signing-error"
             });
         });
 });
 
+// GET THANKS
 //if petition is signed this page shall be served
 app.get("/thanks", (req, res) => {
     console.log("made it into thanks route");
@@ -109,13 +179,13 @@ app.get("/thanks", (req, res) => {
         .catch(err => console.log("err in getSigner: ", err));
 });
 
-//route to signers page
+// GET SIGNERS : serving the list of signers
 app.get("/signers", (req, res) => {
     console.log("made it into signers route");
     db.getSignatures()
         .then(data => {
             const signers = data.rows;
-            console.log("signers", signers);
+            // console.log("signers", signers);
 
             res.render("signers", {
                 layout: "main",
@@ -125,4 +195,5 @@ app.get("/signers", (req, res) => {
         })
         .catch(err => console.log("err in getSignatures: ", err));
 });
+
 app.listen("8080", () => console.log("petition server hello"));
