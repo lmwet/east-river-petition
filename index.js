@@ -94,15 +94,23 @@ app.post("/petition", (req, res) => {
 
 //if petition is signed this page shall be served
 app.get("/thanks", (req, res) => {
-    res.render("thanks", {
-        layout: "main",
-        title: "Thank you!"
-    });
     console.log("made it into thanks route");
+    db.getSigner()
+        .then(data => {
+            const signer = data.rows[0].signature;
+            console.log("signer", signer);
+
+            res.render("thanks", {
+                layout: "main",
+                title: "Thank you!",
+                signer
+            });
+        })
+        .catch(err => console.log("err in getSigner: ", err));
 });
 
 //route to signers page
-app.get("/thanks/signers", (req, res) => {
+app.get("/signers", (req, res) => {
     console.log("made it into signers route");
     db.getSignatures()
         .then(data => {

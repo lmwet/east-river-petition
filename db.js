@@ -13,7 +13,14 @@ module.exports.addSigner = (first, last, signature) => {
     return db.query(q, params);
 };
 
-module.exports.getSignatureS = () => {
+module.exports.getSignatures = () => {
     const q = `SELECT * FROM signatures`;
+    return db.query(q);
+};
+
+module.exports.getSigner = () => {
+    const q = `SELECT * FROM signatures ORDER BY ID DESC LIMIT 1`;
+    console.log(q);
+
     return db.query(q);
 };
