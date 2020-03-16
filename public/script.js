@@ -40,16 +40,16 @@ $("#canvas").mousemove(function(e) {
     }
 });
 
-$("#canvas").mouseup(function(e) {
+$("#canvas").mouseup(function() {
     mousedown = false;
 });
 
-$("#canvas").mouseleave(function(e) {
+$("#canvas").mouseleave(function() {
     mousedown = false;
 });
 redraw();
 
-$("#submit").click(function(e) {
+$("#submit").click(function() {
     let signature = $("#canvas")
         .get(0)
         .toDataURL();

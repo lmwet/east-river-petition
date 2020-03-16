@@ -42,15 +42,15 @@ app.use(
 
 //check for previous visit
 //redirects to /thanks if there is a cookie
-app.use((req, res, next) => {
-    if (req.session.signatureId && req.url === "/petition") {
-        res.redirect("/thanks");
-    } else if (!req.session.signatureId && req.url === "/thanks") {
-        res.redirect("/petition");
-    } else {
-        next();
-    }
-});
+// app.use((req, res, next) => {
+//     if (req.session.signatureId && req.url === "/petition") {
+//         res.redirect("/thanks");
+//     } else if (!req.session.signatureId && req.url === "/thanks") {
+//         res.redirect("/petition");
+//     } else {
+//         next();
+//     }
+// });
 
 //////////// ROUTES ////////////
 // Home route is checking on cookiesession and redirecting
@@ -58,6 +58,76 @@ app.get("/", (req, res) => {
     console.log("GET / ROUTE REDIRECTING TO / REGISTER");
     // if cookieSession.oebwowubgr
     res.redirect("/register");
+});
+
+// GET PETITION: signing page
+//always renders petition.handlebars with no error
+app.get("/petition", (req, res) => {
+    console.log("petition home route runnin");
+
+    res.render("petition", {
+        layout: "main",
+        title: "Petition"
+    });
+});
+
+// POST PETITION
+//save data into db
+app.post("/petition", (req, res) => {
+    console.log("ran post petition route");
+    const signature = req.body.hiddenField;
+    const user_id = req.session.user_id;
+    console.log("user_id", user_id);
+
+    db.addSigner(user_id, signature)
+        .then(data => {
+            //setting cookie to remember the users signature
+            req.session.signatureId = data.rows[0].id;
+            res.redirect("/thanks");
+        })
+        .catch(err => {
+            console.log("err in addSigner", err);
+            res.render("petition", {
+                layout: "main",
+                error_message: true,
+                title: "Petition-signing-error"
+            });
+        });
+});
+
+// GET THANKS
+//if petition is signed this page shall be served
+app.get("/thanks", (req, res) => {
+    console.log("made it into thanks route");
+    db.getSigner()
+        .then(data => {
+            const signatureGraph = data.rows[0].signature;
+            console.log("signatureGraph", signatureGraph);
+
+            res.render("thanks", {
+                layout: "main",
+                title: "Thank you!",
+                signatureGraph
+            });
+        })
+        .catch(err => console.log("err in getSigner: ", err));
+});
+
+// GET SIGNERS : serving the list of signers
+app.get("/signers", (req, res) => {
+    console.log("made it into signers route");
+    db.getSigners()
+        .then(data => {
+            const signers = data.rows;
+            console.log("signers", signers);
+
+            res.render("signers", {
+                layout: "main",
+                title: "Signers",
+                signers
+            });
+        })
+        .catch(err => console.log("err in getSignatures: ", err));
 });
 
 ////////////////////////////////////// REGISTER AND LOGIN //////////////////////////////////////
@@ -74,8 +144,8 @@ app.get("/register", (req, res) => {
 
 //POST REGISTER and remembering the user in cookiesession
 app.post("/register", (req, res) => {
-    const first = req.body.first;
-    const last = req.body.last;
+    const first = req.body.firstname;
+    const last = req.body.lastname;
     const email = req.body.email;
     const password = req.body.password;
 
@@ -84,13 +154,15 @@ app.post("/register", (req, res) => {
         .then(hashedPw => {
             console.log("hashedPW", hashedPw);
             // res.sendStatus(200); ???
-            // here do cookiesession stuff to keep track of user_id-pw
-
             //saving users data to users table in petition db
             db.addUser(first, last, email, hashedPw)
                 .then(data => {
-                    const user = data.rows[0];
-                    console.log("registered user", user);
+                    console.log("current user data", data.rows[0]);
+
+                    console.log("req.session object", req.session);
+
+                    req.session.user_id = data.rows[0].id;
+
                     res.redirect("/petition");
                 })
                 .catch(e => {
@@ -125,75 +197,5 @@ app.get("/login", (req, res) => {
 });
 
 //POST LOGIN TO BE DONE HERE
-
-// GET PETITION: signing page
-//always renders petition.handlebars with no error
-app.get("/petition", (req, res) => {
-    console.log("petition home route runnin");
-
-    res.render("petition", {
-        layout: "main",
-        title: "Petition"
-    });
-});
-
-// POST PETITION
-//save data into db
-app.post("/petition", (req, res) => {
-    console.log("ran post petition route");
-    const user_id = req.body.user_id;
-    const signature = req.body.hiddenField;
-
-    db.addSigner(user_id, signature)
-        .then(data => {
-            console.log("data object from addsigner", data.rows);
-            //setting cookie to remember the users signature
-            req.session.signatureId = data.rows[0].id;
-            res.redirect("/thanks");
-        })
-        .catch(err => {
-            console.log("err in addSigner", err);
-            res.render("petition", {
-                layout: "main",
-                error_message: true,
-                title: "Petition-signing-error"
-            });
-        });
-});
-
-// GET THANKS
-//if petition is signed this page shall be served
-app.get("/thanks", (req, res) => {
-    console.log("made it into thanks route");
-    db.getSigner()
-        .then(data => {
-            const signer = data.rows[0].signature;
-            console.log("signer", signer);
-
-            res.render("thanks", {
-                layout: "main",
-                title: "Thank you!",
-                signer
-            });
-        })
-        .catch(err => console.log("err in getSigner: ", err));
-});
-
-// GET SIGNERS : serving the list of signers
-app.get("/signers", (req, res) => {
-    console.log("made it into signers route");
-    db.getSignatures()
-        .then(data => {
-            const signers = data.rows;
-            // console.log("signers", signers);
-
-            res.render("signers", {
-                layout: "main",
-                title: "Signers",
-                signers
-            });
-        })
-        .catch(err => console.log("err in getSignatures: ", err));
-});
 
 app.listen("8080", () => console.log("petition server hello"));

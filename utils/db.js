@@ -3,19 +3,20 @@ const db = spicedPg(
     "postgres:postgres:postgres:@localhost@localhost:5432/petition"
 );
 
-module.exports.addSigner = (signature, user_id) => {
+module.exports.addSigner = (user_id, signature) => {
     const q = `
     INSERT into signatures (user_id, signature)
     VALUES ($1, $2)
     RETURNING *
     `; // this is security stuff preventing SQL injection
-    const params = [signature, user_id];
+    const params = [user_id, signature];
     return db.query(q, params);
 };
 
-module.exports.getSignatures = () => {
-    const q = `SELECT * FROM signatures`;
-    return db.query(q);
+module.exports.getSigners = () => {
+    //this needs some research
+    // const q = `SELECT first, last FROM users WHERE id = user_id from the signatures table`;
+    // return db.query(q);
 };
 
 module.exports.getSigner = () => {
