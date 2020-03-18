@@ -1,0 +1,41 @@
+<body>
+
+<section class="description">
+
+    <h1> EDIT YOUR PROFILE </h1>
+    
+    <div id='explain'>
+            <img src="eastRiverPark.png">
+    <h3>Make the changes you want by editing these fields</h3>    
+</div>
+</section>
+<section class="form">
+    <form method="post" id="edit-profile-form">
+
+  <label for="firstname">First name:</label><br>
+  <input type="text" id="firstname" name="firstname"><br><br>
+
+  <label for="lastname">Last name:</label><br>
+  <input type="text" id="lastname" name="lastname"><br><br>
+
+  <label for="email">Email:</label><br>
+  <input type="email" id="email" name="email"><br><br>
+
+  <label for="age">Age:</label><br>
+  <input type="number" id="age" name="age"><br><br>
+
+  <label for="city">City:</label><br>
+  <input type="text" id="city" name="city"><br><br>
+
+  <label for="homepage">Url of your homepage:</label><br>
+  <input type="url" id="url" name="url"><br><br>
+
+  <label for="password">Password:</label><br>
+  <input type="text" id="password" name="password"><br><br>
+
+  <input type="hidden" name="_csrf" value="{{csrfToken}}">
+  
+  <input type="submit" value="Update" name="profile" class="submit" id="profile" />
+  </form>
+</section>
+</body>

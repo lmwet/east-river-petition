@@ -95,6 +95,38 @@ app.post("/profile", (req, res) => {
         });
 });
 
+//GET EDIT PROFILE
+app.get("/profile/edit", (req, res) => {
+    console.log("profile route runnin");
+
+    res.render("edit-profile", {
+        layout: "main",
+        title: "Edit your profile"
+    });
+});
+
+//POST EDIT PROFILE
+app.post("/profile/edit", (req, res) => {
+    console.log("ran post profile-edit route");
+    //handle the fact that they are not required fields :/
+    const age = req.body.age;
+    const city = req.body.city;
+    const url = req.body.url;
+    const user_id = req.session.user.user_id;
+    console.log("req.session.user_id on post profile", user_id);
+    //remember the user's city for the "get users by city" rout
+    req.session.user.city = city;
+
+    db.addProfile(age, city, url, user_id)
+        .then(data => {
+            res.redirect("/petition");
+            console.log("object from the profile-form ", data);
+        })
+        .catch(err => {
+            console.log("err in addSigner", err);
+        });
+});
+
 // GET PETITION: signing page
 //always renders petition.handlebars with no error
 app.get("/petition", (req, res) => {
@@ -176,7 +208,6 @@ app.get("/signers/:city", (req, res) => {
     const city = req.params.city;
     db.getSignersByCity(city)
         .then(data => {
-            const city = data.rows[0].city;
             res.render("signers", {
                 layout: "main",
                 title: "Signers by cities",

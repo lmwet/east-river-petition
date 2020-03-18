@@ -73,6 +73,25 @@ module.exports.addProfile = (age, city, url, user_id) => {
     return db.query(q, params);
 };
 
+///////////currently working on this so dont judge :) /////////)
+//POST to profile/edit: selects the user-infos to output into the input fields
+module.exports.editProfile = (first, last, email, age, city, url, password) => {
+    const q = `SELECT
+    users.first,
+    users.last, 
+    user_profiles.email,
+    user_profiles.age,
+    user_profiles.city,
+    user_profiles.url
+ FROM
+    users 
+ JOIN signatures ON signatures.user_id = users.id    
+ JOIN user_profiles ON user_profiles.user_id = users.id
+ WHERE user_profiles.city = ${city};`;
+    return db.query(q);
+};
+////////////////////////////////////
+
 //LOGIN
 // Change the query that retrieves information from the users table by email address so that it also gets data from the signatures table. Thus you will be able to know whether the user has signed the petition or not as soon as they log in.
 module.exports.getSignedInUser = () => {
