@@ -1,6 +1,7 @@
 const spicedPg = require("spiced-pg");
 const db = spicedPg(
-    "postgres:postgres:postgres:@localhost@localhost:5432/petition"
+    process.env.DATABASE_URL ||
+        "postgres:postgres:postgres:@localhost@localhost:5432/petition"
 );
 
 module.exports.addSigner = (user_id, signature) => {
@@ -41,7 +42,8 @@ module.exports.getSignersByCity = city => {
  FROM
     users 
  JOIN signatures ON signatures.user_id = users.id    
- JOIN user_profiles ON user_profiles.city WHERE user_profiles.city = ${city};`; // this cant work
+ JOIN user_profiles ON user_profiles.user_id = users.id
+ WHERE user_profiles.city = ${city};`;
     return db.query(q);
 };
 

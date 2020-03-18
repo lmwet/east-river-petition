@@ -256,4 +256,6 @@ app.get("/login", (req, res) => {
 
 //POST LOGIN TO BE DONE HERE
 
-app.listen("8080", () => console.log("petition server hello"));
+app.listen(process.env.PORT || "8080", () =>
+    console.log("petition server hello")
+);
