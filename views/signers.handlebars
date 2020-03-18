@@ -7,10 +7,10 @@
 </head>
 <body>
     <section>
-    <h1> These are all our supporters!</h1>
+    <h1> These are all our supporters {{#if SignersByCity }} in {{city}} {{/if}}!</h1>
  <div id="form">
     <ul>{{#signers}}
-        <li>{{firstname}} {{lastname}}</li></br>
+      <a href={{url}}><li>{{first}} {{last}}</a> {{age}} <a href="signers/{{city}}">{{city}}</li></a> </br>              
         {{/signers}}
     </ul> 
     </div>
@@ -18,3 +18,5 @@
     
 </body>
 </html>
+
+{{!-- //<a href="'/signers/'+{{city}}"></a> --}}
