@@ -43,8 +43,10 @@ module.exports.getSignersByCity = city => {
     users 
  JOIN signatures ON signatures.user_id = users.id    
  JOIN user_profiles ON user_profiles.user_id = users.id
- WHERE user_profiles.city = ${city};`;
-    return db.query(q);
+ WHERE LOWER(user_profiles.city) = LOWER($1);`;
+
+    const params = [city];
+    return db.query(q, params);
 };
 
 //gets the current signer to render signature in template "petition"
@@ -74,20 +76,23 @@ module.exports.addProfile = (age, city, url, user_id) => {
 };
 
 ///////////currently working on this so dont judge :) /////////)
-//POST to profile/edit: selects the user-infos to output into the input fields
-module.exports.editProfile = (first, last, email, age, city, url, password) => {
+//GET to profile/edit: selects the user-infos to output into the input fields
+module.exports.editProfile = () => {
     const q = `SELECT
+    users.id,
     users.first,
-    users.last, 
-    user_profiles.email,
+    users.last,
+    users.email,
+    users.password,
     user_profiles.age,
     user_profiles.city,
-    user_profiles.url
+    user_profiles.url,
+    user_profiles.user_id
  FROM
-    users 
- JOIN signatures ON signatures.user_id = users.id    
- JOIN user_profiles ON user_profiles.user_id = users.id
- WHERE user_profiles.city = ${city};`;
+    users
+ LEFT JOIN user_profiles ON user_profiles.user_id = users.id
+ ORDER BY 
+ users.id DESC;`;
     return db.query(q);
 };
 ////////////////////////////////////

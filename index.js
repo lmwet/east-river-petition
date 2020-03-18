@@ -97,35 +97,46 @@ app.post("/profile", (req, res) => {
 
 //GET EDIT PROFILE
 app.get("/profile/edit", (req, res) => {
-    console.log("profile route runnin");
+    console.log("profile/edit route runnin");
 
-    res.render("edit-profile", {
-        layout: "main",
-        title: "Edit your profile"
-    });
-});
-
-//POST EDIT PROFILE
-app.post("/profile/edit", (req, res) => {
-    console.log("ran post profile-edit route");
-    //handle the fact that they are not required fields :/
-    const age = req.body.age;
-    const city = req.body.city;
-    const url = req.body.url;
-    const user_id = req.session.user.user_id;
-    console.log("req.session.user_id on post profile", user_id);
-    //remember the user's city for the "get users by city" rout
-    req.session.user.city = city;
-
-    db.addProfile(age, city, url, user_id)
+    db.editProfile()
         .then(data => {
-            res.redirect("/petition");
-            console.log("object from the profile-form ", data);
+            const profile = data.rows[0];
+            console.log("profile", profile);
+
+            res.render("edit-profile", {
+                layout: "main",
+                title: "Edit your profile",
+                profile
+            });
         })
-        .catch(err => {
-            console.log("err in addSigner", err);
-        });
+        .catch(err => console.log("err in editProfile: ", err));
 });
+
+// first, last, age, city, url, user_id, password
+
+// //POST EDIT PROFILE
+// app.post("/profile/edit", (req, res) => {
+//     console.log("ran post profile-edit route");
+//     //handle the fact that they are not required fields :/
+//     const age = req.body.age;
+//     const city = req.body.city;
+//     const url = req.body.url;
+//     const user_id = req.session.user.user_id;
+//     console.log("req.session.user_id on post profile", user_id);
+//     //remember the user's city for the "get users by city" rout
+//     req.session.user.city = city;
+
+//     db.editProfile(first, last, age, city, url, user_id, password)
+//     .then(data => {
+//         const age = data.rows[0].age;
+
+//         res.render("thanks", {
+//             layout: "main",
+//             title: "Thank you!",
+//             signatureGraph
+//         });
+// });
 
 // GET PETITION: signing page
 //always renders petition.handlebars with no error
@@ -183,6 +194,7 @@ app.get("/thanks", (req, res) => {
         })
         .catch(err => console.log("err in getSigner: ", err));
 });
+
 //Before you put the url a user specifies into the href attribute of a link, you must make sure that it begins with either "http://" or "https://". This is not just to ensure that the link goes somewhere outside of your site, althoug that is a benefit. It is also important for security. Since browsers support Javascript URLs, we must make sure that a malicious user can't create a link that runs Javascript code when other users click on it. You can decide whether to check the url when the user inputs it (before you insert it into the database) or when you get it out of the database (before you pass it to your template).
 //If it doesn't start with "http://" or "https://", do not put it in an href attribute.
 // GET SIGNERS : serving the list of signers
@@ -191,7 +203,7 @@ app.get("/signers", (req, res) => {
     db.getSigners()
         .then(data => {
             const signers = data.rows;
-            console.log("signers", signers);
+            // console.log("signers", signers);
 
             res.render("signers", {
                 layout: "main",
@@ -206,12 +218,17 @@ app.get("/signers", (req, res) => {
 app.get("/signers/:city", (req, res) => {
     console.log("made it into signers-by-city route");
     const city = req.params.city;
+
     db.getSignersByCity(city)
         .then(data => {
+            const signersByCity = data.rows;
+            // console.log("signersByCity", signersByCity);
+
             res.render("signers", {
                 layout: "main",
                 title: "Signers by cities",
                 SignersByCity: true,
+                signersByCity,
                 city
             });
         })

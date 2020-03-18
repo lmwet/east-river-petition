@@ -9,9 +9,16 @@
     <section>
     <h1> These are all our supporters {{#if SignersByCity }} in {{city}} {{/if}}!</h1>
  <div id="form">
-    <ul>{{#signers}}
+    <ul>{{#signers}} 
       <a href={{url}}><li>{{first}} {{last}}</a> {{age}} <a href="signers/{{city}}">{{city}}</li></a> </br>              
         {{/signers}}
+        </ul> 
+    </div>
+    <div id="form"></div>
+    <ul>
+        {{#signersByCity}}
+        <a href={{url}}><li>{{first}} {{last}}</a> {{age}} </br>   
+        {{/signersByCity}} 
     </ul> 
     </div>
 </section>
