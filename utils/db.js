@@ -31,7 +31,7 @@ module.exports.getSigners = () => {
 };
 
 //get signers by city to optionnally render in template "signers"
-module.exports.getSignersByCity = city => {
+exports.getSignersByCity = city => {
     const q = `SELECT
     users.first,
     users.last, 
@@ -50,13 +50,13 @@ module.exports.getSignersByCity = city => {
 };
 
 //gets the current signer to render signature in template "petition"
-module.exports.getSigner = () => {
+exports.getSigner = () => {
     const q = `SELECT * FROM signatures ORDER BY ID DESC LIMIT 1`;
     return db.query(q);
 };
 
 //  POST to /register
-module.exports.addUser = (first, last, email, password) => {
+exports.addUser = (first, last, email, password) => {
     const q = `INSERT into users (first, last, email, password)
     VALUES ($1, $2, $3, $4)
     RETURNING *`;
@@ -66,7 +66,7 @@ module.exports.addUser = (first, last, email, password) => {
 };
 
 // POST to /profile
-module.exports.addProfile = (age, city, url, user_id) => {
+exports.addProfile = (age, city, url, user_id) => {
     const q = `INSERT into user_profiles (age, city, url, user_id)
     VALUES ($1, $2, $3, $4)
     RETURNING *`;
@@ -75,9 +75,8 @@ module.exports.addProfile = (age, city, url, user_id) => {
     return db.query(q, params);
 };
 
-///////////currently working on this so dont judge :) /////////)
 //GET to profile/edit: selects the user-infos to output into the input fields
-module.exports.editProfile = () => {
+exports.editProfile = () => {
     const q = `SELECT
     users.id,
     users.first,
@@ -95,11 +94,13 @@ module.exports.editProfile = () => {
  users.id DESC;`;
     return db.query(q);
 };
+
+//POST to profile/edit:
 ////////////////////////////////////
 
 //LOGIN
 // Change the query that retrieves information from the users table by email address so that it also gets data from the signatures table. Thus you will be able to know whether the user has signed the petition or not as soon as they log in.
-module.exports.getSignedInUser = () => {
+exports.getSignedInUser = () => {
     const q = `SELECT * FROM signatures ORDER BY ID DESC LIMIT 1`;
     ///email stuff
     return db.query(q);

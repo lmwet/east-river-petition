@@ -1,18 +1,31 @@
 const express = require("express");
-const app = express();
+const app = (exports.app = express());
 const db = require("./utils/db.js");
-const csurf = require("csurf");
+// const csurf = require("csurf");
 const hb = require("express-handlebars");
 const cookieSession = require("cookie-session");
 const { hash, compare } = require("./utils/bcrypt");
+const {
+    requireLoggedOutUser,
+    requireNoSignature,
+    requireSignature,
+    makeCookiesSafe,
+    requireLoggedInUser
+} = require("./middleware");
 
 app.engine("handlebars", hb());
 app.set("view engine", "handlebars");
 
-////////////// MIDDLEWARE //////////////
+////////////// OLD MIDDLEWARE //////////////
 
 app.use(express.static("./public"));
 app.use(express.static("./views/images"));
+
+app.use(
+    express.urlencoded({
+        extended: false
+    })
+);
 
 // req.session is an object that you attach properties to ie signature id
 // DONT CHANGE ORDER INHERE!
@@ -23,46 +36,94 @@ app.use(
     })
 );
 
-app.use(
-    express.urlencoded({
-        extended: false
-    })
-);
-
 // app.use(csurf());
 
-//security routine
-// app.use(function(req, res, next) {
-//     res.set("x-frame-options", "DENY");
-//     res.locals.csrfToken = req.csrfToken();
-//     next();
-// });
+app.use(makeCookiesSafe);
 
-//check for previous visit
-//redirects to /thanks if there is a cookie
-// app.use((req, res, next) => {
-//     if (req.session.signatureId && req.url === "/petition") {
-//         res.redirect("/thanks");
-//     } else if (!req.session.signatureId && req.url === "/thanks") {
-//         res.redirect("/petition");
-//     } else {
-//         next();
-//     }
-// });
+////////////////////////////////////// REGISTER AND LOGIN //////////////////////////////////////
 
-//////////// ROUTES ////////////
-// Home route is checking on cookiesession and redirecting
-app.get("/", (req, res) => {
-    console.log("GET / ROUTE REDIRECTING TO / REGISTER");
-    // if (req.session.user_id) {
-    //     res.redirect("/thanks");
-    // } else (
-    res.redirect("/register");
-    // )
+// GET REGISTER
+app.get("/register", requireLoggedOutUser, (req, res) => {
+    res.render("register", {
+        layout: "main",
+        title: "Sign-up"
+    });
+    console.log("made it into register route");
 });
 
+//POST REGISTER and remembering the user in cookiesession
+app.post("/register", requireLoggedOutUser, (req, res) => {
+    const first = req.body.firstname;
+    const last = req.body.lastname;
+    const email = req.body.email;
+    const password = req.body.password;
+
+    //hashing and salting the passwords
+    hash(password)
+        .then(hashedPw => {
+            //saving users data to users table in petition db
+            db.addUser(first, last, email, hashedPw)
+                .then(data => {
+                    console.log("current user data", data.rows[0]);
+
+                    //remembering user_id and email in the session cookie for login
+                    req.session.user.email = data.rows[0].email;
+                    req.session.user.user_id = data.rows[0].id;
+                    console.log("req.session object", req.session);
+                    res.redirect("/profile");
+                })
+                .catch(e => {
+                    console.log("error in Post register in hash", e);
+                    res.render("register", {
+                        layout: "main",
+                        error_message: true,
+                        title: "Sign Up Error"
+                    });
+                });
+        })
+        .catch(e => {
+            console.log("error in Post register in hash", e);
+            res.sendStatus(500);
+
+            res.render("register", {
+                layout: "main",
+                error_message: true,
+                title: "Sign Up Error"
+            });
+        });
+});
+
+// GET LOGIN
+app.get("/login", requireLoggedOutUser, (req, res) => {
+    console.log("made it into login route");
+
+    res.render("login", {
+        layout: "main",
+        title: "Login"
+    });
+});
+
+//POST LOGIN TO BE DONE HERE
+app.post("/login", requireLoggedOutUser, (req, res) => {
+    console.log("made it into login route");
+
+    // db.///
+});
+
+//GET LOGOUT TO BE DONE HERE
+
+//////////// ROUTES ////////////
+// Home route is just redirecting and creating the user object to the session
+app.get("/", (req, res) => {
+    req.session.user = {};
+    res.redirect("/register");
+    console.log("GET / ROUTE REDIRECTING TO / REGISTER");
+});
+
+app.use(requireLoggedInUser);
+
 // GET PROFILE
-app.get("/profile", (req, res) => {
+app.get("/profile", requireLoggedInUser, (req, res) => {
     console.log("profile route runnin");
 
     res.render("profile", {
@@ -72,10 +133,11 @@ app.get("/profile", (req, res) => {
 });
 
 //POST PROFILE
-app.post("/profile", (req, res) => {
+app.post("/profile", requireLoggedInUser, (req, res) => {
     console.log("ran post profile route");
+    ////////////////////////////////////////////////////////////
     //handle the fact that they are not required fields :/
-
+    ////////////////////////////////////////////////////////////
     const age = req.body.age;
 
     const city = req.body.city;
@@ -96,14 +158,13 @@ app.post("/profile", (req, res) => {
 });
 
 //GET EDIT PROFILE
-app.get("/profile/edit", (req, res) => {
+app.get("/profile/edit", requireLoggedInUser, (req, res) => {
     console.log("profile/edit route runnin");
 
     db.editProfile()
         .then(data => {
             const profile = data.rows[0];
             console.log("profile", profile);
-
             res.render("edit-profile", {
                 layout: "main",
                 title: "Edit your profile",
@@ -116,7 +177,7 @@ app.get("/profile/edit", (req, res) => {
 // first, last, age, city, url, user_id, password
 
 // //POST EDIT PROFILE
-// app.post("/profile/edit", (req, res) => {
+// app.post("/profile/edit", requireLoggedInUser, (req, res) => {
 //     console.log("ran post profile-edit route");
 //     //handle the fact that they are not required fields :/
 //     const age = req.body.age;
@@ -140,9 +201,8 @@ app.get("/profile/edit", (req, res) => {
 
 // GET PETITION: signing page
 //always renders petition.handlebars with no error
-app.get("/petition", (req, res) => {
+app.get("/petition", requireNoSignature, (req, res) => {
     console.log("petition home route runnin");
-
     res.render("petition", {
         layout: "main",
         title: "Petition"
@@ -151,7 +211,7 @@ app.get("/petition", (req, res) => {
 
 // POST PETITION
 //save data into db
-app.post("/petition", (req, res) => {
+app.post("/petition", requireNoSignature, (req, res) => {
     console.log("ran post petition route");
     const signature = req.body.hiddenField;
     const user_id = req.session.user.user_id;
@@ -180,7 +240,7 @@ app.post("/petition", (req, res) => {
 
 // GET THANKS
 //if petition is signed this page shall be served
-app.get("/thanks", (req, res) => {
+app.get("/thanks", requireSignature, (req, res) => {
     console.log("made it into thanks route");
     db.getSigner()
         .then(data => {
@@ -189,7 +249,9 @@ app.get("/thanks", (req, res) => {
             res.render("thanks", {
                 layout: "main",
                 title: "Thank you!",
-                signatureGraph
+                signatureGraph,
+                navbar,
+                profileInfos: true
             });
         })
         .catch(err => console.log("err in getSigner: ", err));
@@ -198,7 +260,7 @@ app.get("/thanks", (req, res) => {
 //Before you put the url a user specifies into the href attribute of a link, you must make sure that it begins with either "http://" or "https://". This is not just to ensure that the link goes somewhere outside of your site, althoug that is a benefit. It is also important for security. Since browsers support Javascript URLs, we must make sure that a malicious user can't create a link that runs Javascript code when other users click on it. You can decide whether to check the url when the user inputs it (before you insert it into the database) or when you get it out of the database (before you pass it to your template).
 //If it doesn't start with "http://" or "https://", do not put it in an href attribute.
 // GET SIGNERS : serving the list of signers
-app.get("/signers", (req, res) => {
+app.get("/signers", requireSignature, (req, res) => {
     console.log("made it into signers route");
     db.getSigners()
         .then(data => {
@@ -208,14 +270,16 @@ app.get("/signers", (req, res) => {
             res.render("signers", {
                 layout: "main",
                 title: "Signers",
-                signers
+                signers,
+                navbar,
+                profileInfos: true
             });
         })
         .catch(err => console.log("err in getSigners: ", err));
 });
 
 // GET SIGNERS BY CITY
-app.get("/signers/:city", (req, res) => {
+app.get("/signers/:city", requireSignature, (req, res) => {
     console.log("made it into signers-by-city route");
     const city = req.params.city;
 
@@ -229,80 +293,19 @@ app.get("/signers/:city", (req, res) => {
                 title: "Signers by cities",
                 SignersByCity: true,
                 signersByCity,
+                navbar,
+                profileInfos: true,
                 city
             });
         })
         .catch(err => console.log("err in get signers by city: ", err));
 });
 
-////////////////////////////////////// REGISTER AND LOGIN //////////////////////////////////////
+//do my-profile route
 
-// GET REGISTER
-app.get("/register", (req, res) => {
-    console.log("made it into register route");
+//do about route
 
-    res.render("register", {
-        layout: "main",
-        title: "Sign-up"
-    });
-});
-
-//POST REGISTER and remembering the user in cookiesession
-app.post("/register", (req, res) => {
-    const first = req.body.firstname;
-    const last = req.body.lastname;
-    const email = req.body.email;
-    const password = req.body.password;
-
-    //hashing and salting the passwords
-    hash(password)
-        .then(hashedPw => {
-            // res.sendStatus(200); ???
-            //saving users data to users table in petition db
-            db.addUser(first, last, email, hashedPw)
-                .then(data => {
-                    console.log("current user data", data.rows[0]);
-
-                    //remembering user_id and email in the session cookie for login
-                    req.session.user = {};
-                    req.session.user.email = data.rows[0].email;
-                    req.session.user.user_id = data.rows[0].id;
-                    console.log("req.session object", req.session);
-
-                    res.redirect("/profile");
-                })
-                .catch(e => {
-                    console.log("error in Post register in hash", e);
-                    res.render("register", {
-                        layout: "main",
-                        error_message: true,
-                        title: "Sign Up Error"
-                    });
-                });
-        })
-        .catch(e => {
-            console.log("error in Post register in hash", e);
-            res.sendStatus(500);
-
-            res.render("register", {
-                layout: "main",
-                error_message: true,
-                title: "Sign Up Error"
-            });
-        });
-});
-
-// GET LOGIN
-app.get("/login", (req, res) => {
-    console.log("made it into login route");
-
-    res.render("login", {
-        layout: "main",
-        title: "Login"
-    });
-});
-
-//POST LOGIN TO BE DONE HERE
+//do contact route
 
 app.listen(process.env.PORT || "8080", () =>
     console.log("petition server hello")
