@@ -106,13 +106,27 @@ app.get("/login", requireLoggedOutUser, (req, res) => {
 //POST LOGIN TO BE DONE HERE
 app.post("/login", requireLoggedOutUser, (req, res) => {
     console.log("made it into login route");
-
-    // db.///
+    const email = req.body.email;
+    const password = req.body.password;
+    db.login(email).then(data => {
+       if (compare(data, password)) {
+           if ( user_id in to found in the signatures db) {
+            res.redirect("/thanks")
+           } else {
+            res.redirect("/petition")
+           }
+           
+       }
+    });
 });
-
+POST /login
+get the user's stored hashed password from the db using the user's email address
+pass the hashed password to COMPARE along with the password the user typed in the input field
+if they match, COMPARE returns a boolean value of true
+store the userId in a cookie
 //GET LOGOUT TO BE DONE HERE
 
-//////////// ROUTES ////////////
+//////////// OTHER ROUTES ////////////
 // Home route is just redirecting and creating the user object to the session
 app.get("/", (req, res) => {
     req.session.user = {};
@@ -139,7 +153,6 @@ app.post("/profile", requireLoggedInUser, (req, res) => {
     //handle the fact that they are not required fields :/
     ////////////////////////////////////////////////////////////
     const age = req.body.age;
-
     const city = req.body.city;
     const url = req.body.url;
     const user_id = req.session.user.user_id;
@@ -174,30 +187,47 @@ app.get("/profile/edit", requireLoggedInUser, (req, res) => {
         .catch(err => console.log("err in editProfile: ", err));
 });
 
-// first, last, age, city, url, user_id, password
-
 // //POST EDIT PROFILE
-// app.post("/profile/edit", requireLoggedInUser, (req, res) => {
-//     console.log("ran post profile-edit route");
-//     //handle the fact that they are not required fields :/
-//     const age = req.body.age;
-//     const city = req.body.city;
-//     const url = req.body.url;
-//     const user_id = req.session.user.user_id;
-//     console.log("req.session.user_id on post profile", user_id);
-//     //remember the user's city for the "get users by city" rout
-//     req.session.user.city = city;
+app.post("/profile/edit", requireLoggedInUser, (req, res) => {
+    console.log("ran post profile-edit route");
+    //handle the fact that they are not required fields :/
+    const first = req.body.firstname;
+    const last = req.body.lastname;
+    const email = req.body.email;
+    const password = req.body.password;
+    const user_id = req.session.user.user_id;
+    const age = req.body.age;
+    const city = req.body.city;
+    const url = req.body.url;
 
-//     db.editProfile(first, last, age, city, url, user_id, password)
-//     .then(data => {
-//         const age = data.rows[0].age;
+    //updating the users DB
+    hash(password)
+        .then(password => {
+            db.updateUsers(first, last, password, user_id, email)
+                .then(data => {
+                    console.log("updates from user_profiles", data);
 
-//         res.render("thanks", {
-//             layout: "main",
-//             title: "Thank you!",
-//             signatureGraph
-//         });
-// });
+                    //updatung the user_profiles DB
+                    db.updateUserProfiles(user_id, age, city, url) //not working
+                        .then(data => {
+                            console.log("updates from users", data);
+                        })
+                        .catch(err => {
+                            console.log(
+                                "err in updating user_profiles table for profile/edit",
+                                err
+                            );
+                        });
+                    res.redirect("/petition");
+                })
+                .catch(err => {
+                    console.log("err in update users", err);
+                });
+        })
+        .catch(err => {
+            console.log("err in hash password in update users", err);
+        });
+});
 
 // GET PETITION: signing page
 //always renders petition.handlebars with no error
@@ -250,7 +280,6 @@ app.get("/thanks", requireSignature, (req, res) => {
                 layout: "main",
                 title: "Thank you!",
                 signatureGraph,
-                navbar,
                 profileInfos: true
             });
         })
@@ -271,7 +300,6 @@ app.get("/signers", requireSignature, (req, res) => {
                 layout: "main",
                 title: "Signers",
                 signers,
-                navbar,
                 profileInfos: true
             });
         })
@@ -293,7 +321,6 @@ app.get("/signers/:city", requireSignature, (req, res) => {
                 title: "Signers by cities",
                 SignersByCity: true,
                 signersByCity,
-                navbar,
                 profileInfos: true,
                 city
             });

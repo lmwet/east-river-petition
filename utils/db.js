@@ -95,13 +95,40 @@ exports.editProfile = () => {
     return db.query(q);
 };
 
-//POST to profile/edit:
-////////////////////////////////////
+//POST to profile/edit: upserting the data submitted by the user editing their profile
+exports.updateUsers = (first, last, password, id, email) => {
+    // query to edit users table
+
+    const q = `UPDATE users
+    SET first = $1, last = $2, email = $5, password = $3
+    WHERE id = $4
+    AND password <> $3
+    RETURNING *`;
+
+    console.log(q);
+    const params = [first, last, password, id, email];
+    return db.query(q, params);
+};
+
+exports.updateUserProfiles = (user_id, age, city, url) => {
+    //UPSERT in user_profiles
+    const q = `INSERT INTO user_profiles (user_id, age, city, url)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (user_id)
+            DO UPDATE SET age = $2, city = $3, url = $4
+            RETURNING *`;
+    console.log(q);
+    const params = [user_id, age, city, url];
+    return db.query(q, params);
+};
 
 //LOGIN
-// Change the query that retrieves information from the users table by email address so that it also gets data from the signatures table. Thus you will be able to know whether the user has signed the petition or not as soon as they log in.
-exports.getSignedInUser = () => {
-    const q = `SELECT * FROM signatures ORDER BY ID DESC LIMIT 1`;
-    ///email stuff
-    return db.query(q);
+// Change the query that retrieves information from the users table by email address
+//so that it also gets data from the signatures table.
+//Thus you will be able to know whether the user has signed the petition or not as soon as they log in.
+exports.login = email => {
+    const q = `SELECT password, user_id FROM users WHERE email = $1`;
+    //need some extra stuff
+    const params = [email];
+    return db.query(q, params);
 };

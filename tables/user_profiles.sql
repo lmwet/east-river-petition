@@ -5,7 +5,7 @@ CREATE TABLE user_profiles (
     age INT,
     city VARCHAR(255), 
     url VARCHAR(255),
-    user_id INTEGER NOT NULL REFERENCES users(id),
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
