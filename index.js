@@ -69,7 +69,7 @@ app.post("/register", requireLoggedOutUser, (req, res) => {
                     //remembering user_id and email in the session cookie for login
                     req.session.user.email = data.rows[0].email;
                     req.session.user.user_id = data.rows[0].id;
-                    console.log("req.session object", req.session);
+                    // console.log("req.session object", req.session);
                     res.redirect("/profile");
                 })
                 .catch(e => {
@@ -108,23 +108,22 @@ app.post("/login", requireLoggedOutUser, (req, res) => {
     console.log("made it into login route");
     const email = req.body.email;
     const password = req.body.password;
+
+    //comparing hashed PW from database to input and saving user's id into the session
     db.login(email).then(data => {
-       if (compare(data, password)) {
-           if ( user_id in to found in the signatures db) {
-            res.redirect("/thanks")
-           } else {
-            res.redirect("/petition")
-           }
-           
-       }
+        console.log("login object", data);
+
+        if (compare(data, password)) {
+            if (data.rows[0].user_id) {
+                req.session.user.user_id = data.rows[0].id;
+                res.redirect("/thanks");
+            } else {
+                req.session.user.user_id = data.rows[0].id;
+                res.redirect("/petition");
+            }
+        }
     });
 });
-POST /login
-get the user's stored hashed password from the db using the user's email address
-pass the hashed password to COMPARE along with the password the user typed in the input field
-if they match, COMPARE returns a boolean value of true
-store the userId in a cookie
-//GET LOGOUT TO BE DONE HERE
 
 //////////// OTHER ROUTES ////////////
 // Home route is just redirecting and creating the user object to the session

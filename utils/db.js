@@ -127,7 +127,11 @@ exports.updateUserProfiles = (user_id, age, city, url) => {
 //so that it also gets data from the signatures table.
 //Thus you will be able to know whether the user has signed the petition or not as soon as they log in.
 exports.login = email => {
-    const q = `SELECT password, user_id FROM users WHERE email = $1`;
+    const q = `SELECT password, 
+    id, 
+    signatureId 
+    FROM users WHERE email = $1
+    LEFT JOIN signatures ON signatures.user_id = users.id`;
     //need some extra stuff
     const params = [email];
     return db.query(q, params);
