@@ -12,12 +12,13 @@
 </section>
 
 <section class="form">
-
+  <form method="post" id="login-form">
   <label for="email">Email:</label><br>
   <input type="email" id="email" name="email"><br><br>
     <label for="password">Password:</label><br>
   <input type="text" id="password" name="password"><br><br>
     <input type="hidden" name="_csrf" value="{{csrfToken}}">
   <input type="submit" value="Log in" name="login" class="submit" id="login" />
+  </form>
 </section>
 </body>

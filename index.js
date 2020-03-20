@@ -1,7 +1,7 @@
 const express = require("express");
 const app = (exports.app = express());
 const db = require("./utils/db.js");
-// const csurf = require("csurf");
+const csurf = require("csurf");
 const hb = require("express-handlebars");
 const cookieSession = require("cookie-session");
 const { hash, compare } = require("./utils/bcrypt");
@@ -27,7 +27,6 @@ app.use(
     })
 );
 
-// req.session is an object that you attach properties to ie signature id
 // DONT CHANGE ORDER INHERE!
 app.use(
     cookieSession({
@@ -36,7 +35,9 @@ app.use(
     })
 );
 
-// app.use(csurf());
+app.use(csurf());
+
+//SHOULD I HANDLE THE LOG IN / OUT WITH MIDDLEWARE FUNCTIONS?
 
 app.use(makeCookiesSafe);
 
@@ -44,6 +45,7 @@ app.use(makeCookiesSafe);
 
 // GET REGISTER
 app.get("/register", requireLoggedOutUser, (req, res) => {
+    req.session.user = {};
     res.render("register", {
         layout: "main",
         title: "Sign-up"
@@ -95,6 +97,7 @@ app.post("/register", requireLoggedOutUser, (req, res) => {
 
 // GET LOGIN
 app.get("/login", requireLoggedOutUser, (req, res) => {
+    req.session.user = {};
     console.log("made it into login route");
 
     res.render("login", {
@@ -106,23 +109,38 @@ app.get("/login", requireLoggedOutUser, (req, res) => {
 //POST LOGIN TO BE DONE HERE
 app.post("/login", requireLoggedOutUser, (req, res) => {
     console.log("made it into login route");
-    const email = req.body.email;
-    const password = req.body.password;
 
     //comparing hashed PW from database to input and saving user's id into the session
-    db.login(email).then(data => {
+    db.login(req.body.email).then(data => {
         console.log("login object", data);
 
-        if (compare(data, password)) {
-            if (data.rows[0].user_id) {
-                req.session.user.user_id = data.rows[0].id;
-                res.redirect("/thanks");
-            } else {
-                req.session.user.user_id = data.rows[0].id;
-                res.redirect("/petition");
-            }
-        }
+        compare(req.body.password, data.rows[0].password)
+            .then(res => {
+                console.log("made into compare res");
+
+                if (data.rows[0].user_id) {
+                    console.log("made into if res");
+                    req.session.user.user_id = data.rows[0].id;
+                    res.redirect("/thanks");
+                } else {
+                    console.log("made into else res");
+                    req.session.user.user_id = data.rows[0].id;
+                    res.redirect("/petition");
+                }
+            })
+            .catch(err => {
+                console.log("err in login", err);
+                res.send(
+                    `<h3>Mist...the password doesn't match, <a href="/login"><em>try again</em></a> or <a href="/register"><em>register.</em></a></h3>`
+                );
+            });
     });
+});
+
+//LOGOUT
+app.get("/logout", requireLoggedInUser, (req, res) => {
+    delete req.session.user;
+    res.redirect("/about");
 });
 
 //////////// OTHER ROUTES ////////////
@@ -132,8 +150,6 @@ app.get("/", (req, res) => {
     res.redirect("/register");
     console.log("GET / ROUTE REDIRECTING TO / REGISTER");
 });
-
-app.use(requireLoggedInUser);
 
 // GET PROFILE
 app.get("/profile", requireLoggedInUser, (req, res) => {
@@ -327,11 +343,25 @@ app.get("/signers/:city", requireSignature, (req, res) => {
         .catch(err => console.log("err in get signers by city: ", err));
 });
 
-//do my-profile route
+//do my-profile route here
 
-//do about route
+//about route
+app.get("/about", (req, res) => {
+    res.render("about", {
+        layout: "main",
+        title: "About"
+    });
+    console.log("made it into about route");
+});
 
-//do contact route
+//contact route
+app.get("/contact", (req, res) => {
+    res.render("contact", {
+        layout: "main",
+        title: "Contact us"
+    });
+    console.log("made it into contact route");
+});
 
 app.listen(process.env.PORT || "8080", () =>
     console.log("petition server hello")

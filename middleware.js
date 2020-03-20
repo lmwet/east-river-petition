@@ -24,7 +24,7 @@ exports.requireNoSignature = (req, res, next) => {
 
 exports.makeCookiesSafe = (req, res, next) => {
     res.set("x-frame-options", "deny");
-    // res.locals.csrfToken = req.csrfToken();
+    res.locals.csrfToken = req.csrfToken();
     next();
 };
 

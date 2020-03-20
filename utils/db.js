@@ -90,8 +90,7 @@ exports.editProfile = () => {
  FROM
     users
  LEFT JOIN user_profiles ON user_profiles.user_id = users.id
- ORDER BY 
- users.id DESC;`;
+ ORDER BY users.id DESC;`;
     return db.query(q);
 };
 
@@ -128,11 +127,26 @@ exports.updateUserProfiles = (user_id, age, city, url) => {
 //Thus you will be able to know whether the user has signed the petition or not as soon as they log in.
 exports.login = email => {
     const q = `SELECT password, 
-    id, 
-    signatureId 
-    FROM users WHERE email = $1
-    LEFT JOIN signatures ON signatures.user_id = users.id`;
+    users.id,
+    users.password
+    signatures.signatureId
+    FROM users 
+    LEFT OUTER JOIN signatures ON signatures.user_id = users.id
+    WHERE users.email = $1`;
     //need some extra stuff
     const params = [email];
     return db.query(q, params);
 };
+
+// MYSELF:  JOIN is not working properly
+// SELECT singers.name AS singer_name, songs.name AS song_name
+// FROM singers
+// JOIN songs
+// ON singers.id = songs.singer_id;
+
+// singer_name |  song_name
+// -------------+-------------
+// Nicki Minaj | Anaconda
+// Lady Gaga   | Bad Romance
+// Lady Gaga   | Paparazzi
+// Tom Jones   | Sex Bomb
