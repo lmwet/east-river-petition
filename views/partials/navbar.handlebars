@@ -1,14 +1,25 @@
 
     <nav role="">
   <ul>
-
-    <li id="my-profile"><a href="my-profile">Hey {{#profile}}{{first}} {{last}}{{/profile}}</a></li>
+      <li id="home"><a href="/">Home</a></li>
+{{#if userLogedIn}}
+    <li id="profile"><a href="/profile/edit">Hey {{first}} {{last}}</a></li>
+    {{/if}}
+       <li id="register"><a href="/register">Start!</a></li>
+        {{#if userLogedIn}}
      <li id="signers"><a href="/signers">All signers</a></li>
+      {{/if}}
+     {{#if userLogedIn}}
     <li id="profile-edit"><a href="/profile/edit">Edit my profile</a></li>
+       {{/if}}
     <li id="erp-page"><a href="https://eastriverparkaction.org/">EAST RIVER PARK ACTION</a></li>
     <li id="about"><a href="/about">About</a></li>
     <li id="contact"><a href="/contact">Contact</a></li>
-     <li id="contact"><a href="/login">Login</a></li>
-     <li id="contact"><a href="/logout">Logout</a></li>
+    {{#if userLogedOut}}
+     <li id="login"><a href="/login">Login</a></li>
+     {{/if}}
+     {{#if userLogedIn}}
+     <li id="logout"><a href="/logout">Logout</a></li>
+     {{/if}}
   </ul>
 </nav>

@@ -38,7 +38,6 @@ app.use(
 app.use(csurf());
 
 //SHOULD I HANDLE THE LOG IN / OUT WITH MIDDLEWARE FUNCTIONS?
-
 app.use(makeCookiesSafe);
 
 ////////////////////////////////////// REGISTER AND LOGIN //////////////////////////////////////
@@ -48,7 +47,8 @@ app.get("/register", requireLoggedOutUser, (req, res) => {
     req.session.user = {};
     res.render("register", {
         layout: "main",
-        title: "Sign-up"
+        title: "Sign-up",
+        userLogedOut: true
     });
     console.log("made it into register route");
 });
@@ -71,6 +71,8 @@ app.post("/register", requireLoggedOutUser, (req, res) => {
                     //remembering user_id and email in the session cookie for login
                     req.session.user.email = data.rows[0].email;
                     req.session.user.user_id = data.rows[0].id;
+                    req.session.user.first = data.rows[0].first;
+                    req.session.user.last = data.rows[0].last;
                     // console.log("req.session object", req.session);
                     res.redirect("/profile");
                 })
@@ -79,7 +81,8 @@ app.post("/register", requireLoggedOutUser, (req, res) => {
                     res.render("register", {
                         layout: "main",
                         error_message: true,
-                        title: "Sign Up Error"
+                        title: "Sign Up Error",
+                        userLogedOut: true
                     });
                 });
         })
@@ -139,25 +142,32 @@ app.post("/login", requireLoggedOutUser, (req, res) => {
 
 //LOGOUT
 app.get("/logout", requireLoggedInUser, (req, res) => {
-    delete req.session.user;
-    res.redirect("/about");
+    req.session = null;
+    res.redirect("/login");
 });
 
 //////////// OTHER ROUTES ////////////
-// Home route is just redirecting and creating the user object to the session
+// Home route is just a landing page and creates a user object
 app.get("/", (req, res) => {
     req.session.user = {};
-    res.redirect("/register");
-    console.log("GET / ROUTE REDIRECTING TO / REGISTER");
+
+    res.render("home", {
+        layout: "main",
+        title: "Home"
+    });
 });
 
 // GET PROFILE
 app.get("/profile", requireLoggedInUser, (req, res) => {
     console.log("profile route runnin");
-
+    const first = req.session.first;
+    const last = req.session.last;
     res.render("profile", {
         layout: "main",
-        title: "Profile"
+        title: "Profile",
+        first,
+        last,
+        userLogedIn: true
     });
 });
 
@@ -191,12 +201,17 @@ app.get("/profile/edit", requireLoggedInUser, (req, res) => {
 
     db.editProfile()
         .then(data => {
+            const first = req.session.first;
+            const last = req.session.last;
             const profile = data.rows[0];
-            console.log("profile", profile);
+
             res.render("edit-profile", {
                 layout: "main",
                 title: "Edit your profile",
-                profile
+                profile,
+                first,
+                last,
+                userLogedIn: true
             });
         })
         .catch(err => console.log("err in editProfile: ", err));
@@ -247,10 +262,15 @@ app.post("/profile/edit", requireLoggedInUser, (req, res) => {
 // GET PETITION: signing page
 //always renders petition.handlebars with no error
 app.get("/petition", requireNoSignature, (req, res) => {
+    const first = req.session.first;
+    const last = req.session.last;
     console.log("petition home route runnin");
     res.render("petition", {
         layout: "main",
-        title: "Petition"
+        title: "Petition",
+        first,
+        last,
+        userLogedIn: true
     });
 });
 
@@ -278,7 +298,8 @@ app.post("/petition", requireNoSignature, (req, res) => {
             res.render("petition", {
                 layout: "main",
                 error_message: true,
-                title: "Petition-signing-error"
+                title: "Petition-signing-error",
+                userLogedIn: true
             });
         });
 });
@@ -290,12 +311,15 @@ app.get("/thanks", requireSignature, (req, res) => {
     db.getSigner()
         .then(data => {
             const signatureGraph = data.rows[0].signature;
-
+            const first = req.session.first;
+            const last = req.session.last;
             res.render("thanks", {
                 layout: "main",
                 title: "Thank you!",
                 signatureGraph,
-                profileInfos: true
+                first,
+                last,
+                userLogedIn: true
             });
         })
         .catch(err => console.log("err in getSigner: ", err));
@@ -304,31 +328,35 @@ app.get("/thanks", requireSignature, (req, res) => {
 //Before you put the url a user specifies into the href attribute of a link, you must make sure that it begins with either "http://" or "https://". This is not just to ensure that the link goes somewhere outside of your site, althoug that is a benefit. It is also important for security. Since browsers support Javascript URLs, we must make sure that a malicious user can't create a link that runs Javascript code when other users click on it. You can decide whether to check the url when the user inputs it (before you insert it into the database) or when you get it out of the database (before you pass it to your template).
 //If it doesn't start with "http://" or "https://", do not put it in an href attribute.
 // GET SIGNERS : serving the list of signers
-app.get("/signers", requireSignature, (req, res) => {
+app.get("/signers", requireLoggedInUser, (req, res) => {
     console.log("made it into signers route");
     db.getSigners()
         .then(data => {
             const signers = data.rows;
-            // console.log("signers", signers);
+            const first = req.session.first;
+            const last = req.session.last;
 
             res.render("signers", {
                 layout: "main",
                 title: "Signers",
                 signers,
-                profileInfos: true
+                first,
+                last
             });
         })
         .catch(err => console.log("err in getSigners: ", err));
 });
 
 // GET SIGNERS BY CITY
-app.get("/signers/:city", requireSignature, (req, res) => {
+app.get("/signers/:city", requireLoggedInUser, (req, res) => {
     console.log("made it into signers-by-city route");
     const city = req.params.city;
-
+    const first = req.session.first;
+    const last = req.session.last;
     db.getSignersByCity(city)
         .then(data => {
             const signersByCity = data.rows;
+
             // console.log("signersByCity", signersByCity);
 
             res.render("signers", {
@@ -336,8 +364,10 @@ app.get("/signers/:city", requireSignature, (req, res) => {
                 title: "Signers by cities",
                 SignersByCity: true,
                 signersByCity,
-                profileInfos: true,
-                city
+                city,
+                first,
+                last,
+                userLogedIn: true
             });
         })
         .catch(err => console.log("err in get signers by city: ", err));
@@ -347,18 +377,28 @@ app.get("/signers/:city", requireSignature, (req, res) => {
 
 //about route
 app.get("/about", (req, res) => {
+    const first = req.session.first;
+    const last = req.session.last;
+
     res.render("about", {
         layout: "main",
-        title: "About"
+        title: "About",
+        first,
+        last
     });
     console.log("made it into about route");
 });
 
 //contact route
 app.get("/contact", (req, res) => {
+    const first = req.session.first;
+    const last = req.session.last;
+
     res.render("contact", {
         layout: "main",
-        title: "Contact us"
+        title: "Contact us",
+        first,
+        last
     });
     console.log("made it into contact route");
 });
