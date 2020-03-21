@@ -1,4 +1,5 @@
 <body>
+                <img id="home-page-img" src="/summer.png">
 {{> navbar }}
 <section class="description">
 
@@ -8,7 +9,7 @@
    {{/if}}
     
     <div id='explain'>
-            <img src="/summer.png">
+
     <h3>Don't kill our park for a bad flood plan</h3>
     <p>New York City will demolish a big, wonderful park in the name of flood control. There are better plans. Signe this petition to make the City Council step Back and go back to the old plan!  </p>
     <p>We live in the un-trendy, un-rich, un-touristy, homely high-rise, crowded eastern side of the Lower East Side/East Village neighborhood of Manhattan. Our language might not be English, our incomes might not be decent, but we possess something wonderful that no one else has. We must cross footbridges with high chain link fences over the noisy, polluted six-lanes of the FDR Drive to go to it, but we do. Because we come to our East River Park, a big, open, lovely, free place that makes us feel privileged. We play ball, our kids play ball. We picnic and barbeque and dance and lounge around in the shade. We forage. We sit on benches and breathe the fresh air, so unlike the haze in our streets. We walk and talk and bike and fish and play. Along the one and half mile promenade we lean on the railings and watch the tides swoop in and out. </p>
@@ -24,6 +25,7 @@
 <input type="submit" value="Submit" name="submit" class="submit" id="submit" />
   {{!-- security inportant for all forms --}}
   <input type="hidden" name="_csrf" value="{{csrfToken}}">
+  <input type="submit" value="Delete signature" name="delete" class="submit" id="delete" />
 </form> 
 </section>
 </body>

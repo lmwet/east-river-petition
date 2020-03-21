@@ -115,27 +115,37 @@ app.post("/login", requireLoggedOutUser, (req, res) => {
 
     //comparing hashed PW from database to input and saving user's id into the session
     db.login(req.body.email).then(data => {
-        console.log("login object", data);
+        console.log("pw in login object", data.rows[0].password);
 
         compare(req.body.password, data.rows[0].password)
-            .then(res => {
-                console.log("made into compare res");
+            .then(boolean => {
+                console.log("result of compare", boolean);
 
-                if (data.rows[0].user_id) {
-                    console.log("made into if res");
-                    req.session.user.user_id = data.rows[0].id;
-                    res.redirect("/thanks");
+                if (boolean) {
+                    if (data.rows[0].user_id) {
+                        console.log(
+                            "user has signed already",
+                            data.rows[0].user_id,
+                            data.rows[0].id
+                        );
+                        req.session.user.user_id = data.rows[0].id;
+                        res.redirect("/thanks");
+                    } else {
+                        console.log("user hasnt signed yet");
+                        req.session.user.user_id = data.rows[0].id;
+                        res.redirect("/petition");
+                    }
                 } else {
-                    console.log("made into else res");
-                    req.session.user.user_id = data.rows[0].id;
-                    res.redirect("/petition");
+                    console.log("this is not a match");
+                    res.render("login", {
+                        layout: "main",
+                        title: "Login",
+                        error_message: true
+                    });
                 }
             })
             .catch(err => {
                 console.log("err in login", err);
-                res.send(
-                    `<h3>Mist...the password doesn't match, <a href="/login"><em>try again</em></a> or <a href="/register"><em>register.</em></a></h3>`
-                );
             });
     });
 });
@@ -235,12 +245,15 @@ app.post("/profile/edit", requireLoggedInUser, (req, res) => {
         .then(password => {
             db.updateUsers(first, last, password, user_id, email)
                 .then(data => {
-                    console.log("updates from user_profiles", data);
+                    console.log("updates from users", data);
 
-                    //updatung the user_profiles DB
-                    db.updateUserProfiles(user_id, age, city, url) //not working
+                    //updating the user_profiles DB
+                    db.updateUserProfiles(age, city, url, user_id)
                         .then(data => {
-                            console.log("updates from users", data);
+                            console.log(
+                                "updates from user_profiles",
+                                data.rows
+                            );
                         })
                         .catch(err => {
                             console.log(
@@ -341,7 +354,8 @@ app.get("/signers", requireLoggedInUser, (req, res) => {
                 title: "Signers",
                 signers,
                 first,
-                last
+                last,
+                userLogedIn: true
             });
         })
         .catch(err => console.log("err in getSigners: ", err));

@@ -4,9 +4,10 @@ CREATE TABLE user_profiles (
     id SERIAL PRIMARY KEY,
     age INT,
     city VARCHAR(255), 
-    url VARCHAR(255),
-    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    url VARCHAR(255) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id)
+   
 );
 
 

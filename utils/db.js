@@ -89,7 +89,8 @@ exports.editProfile = () => {
     user_profiles.user_id
  FROM
     users
- LEFT JOIN user_profiles ON user_profiles.user_id = users.id
+ LEFT OUTER JOIN user_profiles 
+ ON user_profiles.user_id = users.id
  ORDER BY users.id DESC;`;
     return db.query(q);
 };
@@ -109,15 +110,14 @@ exports.updateUsers = (first, last, password, id, email) => {
     return db.query(q, params);
 };
 
-exports.updateUserProfiles = (user_id, age, city, url) => {
+exports.updateUserProfiles = (age, city, url, user_id) => {
     //UPSERT in user_profiles
-    const q = `INSERT INTO user_profiles (user_id, age, city, url)
+    const q = `INSERT INTO user_profiles (age, city, url, user_id)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (user_id)
-            DO UPDATE SET age = $2, city = $3, url = $4
+            DO UPDATE SET age = $1, city = $2, url = $3
             RETURNING *`;
-    console.log(q);
-    const params = [user_id, age, city, url];
+    const params = [age, city, url, user_id];
     return db.query(q, params);
 };
 
@@ -128,11 +128,11 @@ exports.updateUserProfiles = (user_id, age, city, url) => {
 exports.login = email => {
     const q = `SELECT password, 
     users.id,
-    users.password
-    signatures.signatureId
+    users.password,
+    signatures.user_id
     FROM users 
     LEFT OUTER JOIN signatures ON signatures.user_id = users.id
-    WHERE users.email = $1`;
+    WHERE email = $1`;
     //need some extra stuff
     const params = [email];
     return db.query(q, params);
