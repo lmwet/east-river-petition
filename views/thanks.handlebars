@@ -6,7 +6,11 @@
       <img src='{{signatureGraph}}'>
 
     <a href="/signers">See All Signers Here</a>
-
+    <form method="post" id="delete-signature">
+            {{!-- security inportant for all forms --}}
+  <input type="hidden" name="_csrf" value="{{csrfToken}}">
+  <input type="submit" value="delete" name="delete" class="submit" id="delete" />
+  </form>
     </section>
  </body>
 

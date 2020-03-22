@@ -60,41 +60,52 @@ app.post("/register", requireLoggedOutUser, (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
 
-    //hashing and salting the passwords
-    hash(password)
-        .then(hashedPw => {
-            //saving users data to users table in petition db
-            db.addUser(first, last, email, hashedPw)
-                .then(data => {
-                    console.log("current user data", data.rows[0]);
+    //check if the user has already register with same names
+    db.userCheckin(first, last)
+        .then(data => {
+            //if there is a result to the query, then redirect the user to login page
+            console.log("erwisht! go login", data.rows[0]);
+            res.redirect("/login");
+        })
+        .catch(e => {
+            console.log("user is checked in!", e);
 
-                    //remembering user_id and email in the session cookie for login
-                    req.session.user.email = data.rows[0].email;
-                    req.session.user.user_id = data.rows[0].id;
-                    req.session.user.first = data.rows[0].first;
-                    req.session.user.last = data.rows[0].last;
-                    // console.log("req.session object", req.session);
-                    res.redirect("/profile");
+            //hashing and salting the passwords
+            hash(password)
+                .then(hashedPw => {
+                    //saving users data to users table in petition db
+                    db.addUser(first, last, email, hashedPw)
+                        .then(data => {
+                            console.log("current user data", data.rows[0]);
+
+                            //remembering user_id and email in the session cookie for login
+                            req.session.user.email = data.rows[0].email;
+                            req.session.user.user_id = data.rows[0].id;
+                            req.session.user.first = data.rows[0].first;
+                            req.session.user.last = data.rows[0].last;
+                            // console.log("req.session object", req.session);
+                            res.redirect("/profile");
+                        })
+                        .catch(e => {
+                            console.log("error in Post register in hash", e);
+                            res.render("register", {
+                                layout: "main",
+                                error_message: true,
+                                title: "Sign Up Error",
+                                userLogedOut: true
+                            });
+                        });
                 })
                 .catch(e => {
                     console.log("error in Post register in hash", e);
+                    res.sendStatus(500);
+
                     res.render("register", {
                         layout: "main",
                         error_message: true,
-                        title: "Sign Up Error",
-                        userLogedOut: true
+                        title: "Sign Up Error"
                     });
                 });
-        })
-        .catch(e => {
-            console.log("error in Post register in hash", e);
-            res.sendStatus(500);
-
-            res.render("register", {
-                layout: "main",
-                error_message: true,
-                title: "Sign Up Error"
-            });
         });
 });
 
@@ -109,13 +120,13 @@ app.get("/login", requireLoggedOutUser, (req, res) => {
     });
 });
 
-//POST LOGIN TO BE DONE HERE
+//POST LOGIN
 app.post("/login", requireLoggedOutUser, (req, res) => {
     console.log("made it into login route");
 
     //comparing hashed PW from database to input and saving user's id into the session
     db.login(req.body.email).then(data => {
-        console.log("pw in login object", data.rows[0].password);
+        console.log("pw in login object", data.rows[0]);
 
         compare(req.body.password, data.rows[0].password)
             .then(boolean => {
@@ -129,10 +140,14 @@ app.post("/login", requireLoggedOutUser, (req, res) => {
                             data.rows[0].id
                         );
                         req.session.user.user_id = data.rows[0].id;
+                        req.session.user.first = data.rows[0].first;
+                        req.session.user.last = data.rows[0].last;
                         res.redirect("/thanks");
                     } else {
                         console.log("user hasnt signed yet");
                         req.session.user.user_id = data.rows[0].id;
+                        req.session.user.first = data.rows[0].first;
+                        req.session.user.last = data.rows[0].last;
                         res.redirect("/petition");
                     }
                 } else {
@@ -160,18 +175,27 @@ app.get("/logout", requireLoggedInUser, (req, res) => {
 // Home route is just a landing page and creates a user object
 app.get("/", (req, res) => {
     req.session.user = {};
+    db.countSignatures()
+        .then(data => {
+            const count = data.rows[0].count;
+            console.log("count", count);
 
-    res.render("home", {
-        layout: "main",
-        title: "Home"
-    });
+            res.render("home", {
+                layout: "main",
+                title: "Home",
+                count
+            });
+        })
+        .catch(err => {
+            console.log("err in count", err);
+        });
 });
 
 // GET PROFILE
 app.get("/profile", requireLoggedInUser, (req, res) => {
     console.log("profile route runnin");
-    const first = req.session.first;
-    const last = req.session.last;
+    const first = req.session.user.first;
+    const last = req.session.user.last;
     res.render("profile", {
         layout: "main",
         title: "Profile",
@@ -187,6 +211,7 @@ app.post("/profile", requireLoggedInUser, (req, res) => {
     ////////////////////////////////////////////////////////////
     //handle the fact that they are not required fields :/
     ////////////////////////////////////////////////////////////
+
     const age = req.body.age;
     const city = req.body.city;
     const url = req.body.url;
@@ -194,7 +219,7 @@ app.post("/profile", requireLoggedInUser, (req, res) => {
     console.log("req.session.user_id on post profile", user_id);
     //remember the user's city for the "get users by city" rout
     req.session.user.city = city;
-
+    //handle the https prefixe thingy
     db.addProfile(age, city, url, user_id)
         .then(data => {
             res.redirect("/petition");
@@ -211,8 +236,8 @@ app.get("/profile/edit", requireLoggedInUser, (req, res) => {
 
     db.editProfile()
         .then(data => {
-            const first = req.session.first;
-            const last = req.session.last;
+            const first = req.session.user.first;
+            const last = req.session.user.last;
             const profile = data.rows[0];
 
             res.render("edit-profile", {
@@ -275,8 +300,8 @@ app.post("/profile/edit", requireLoggedInUser, (req, res) => {
 // GET PETITION: signing page
 //always renders petition.handlebars with no error
 app.get("/petition", requireNoSignature, (req, res) => {
-    const first = req.session.first;
-    const last = req.session.last;
+    const first = req.session.user.first;
+    const last = req.session.user.last;
     console.log("petition home route runnin");
     res.render("petition", {
         layout: "main",
@@ -295,26 +320,34 @@ app.post("/petition", requireNoSignature, (req, res) => {
     const user_id = req.session.user.user_id;
     console.log("user_id in add signer", user_id);
 
-    db.addSigner(user_id, signature)
-        .then(data => {
-            //setting cookie to remember the users signature
-            req.session.user.signatureId = data.rows[0].id;
-            console.log(
-                "user object in session in addSigner after signatureId",
-                req.session.user
-            );
-
-            res.redirect("/thanks");
-        })
-        .catch(err => {
-            console.log("err in addSigner", err);
-            res.render("petition", {
-                layout: "main",
-                error_message: true,
-                title: "Petition-signing-error",
-                userLogedIn: true
+    if (!req.session.user.signatureId) {
+        db.addSigner(user_id, signature)
+            .then(data => {
+                //setting cookie to remember the users signature
+                req.session.user.signatureId = data.rows[0].id;
+                console.log(
+                    "user object in session in addSigner after signatureId",
+                    req.session.user
+                );
+                res.render("petition", {
+                    layout: "main",
+                    error_message: true,
+                    title: "Petition-signing-error",
+                    userLogedIn: true
+                });
+            })
+            .catch(err => {
+                console.log("err in addSigner", err);
+                res.render("petition", {
+                    layout: "main",
+                    error_message: true,
+                    title: "Petition-signing-error",
+                    userLogedIn: true
+                });
             });
-        });
+    } else {
+        res.redirect("/thanks");
+    }
 });
 
 // GET THANKS
@@ -324,8 +357,8 @@ app.get("/thanks", requireSignature, (req, res) => {
     db.getSigner()
         .then(data => {
             const signatureGraph = data.rows[0].signature;
-            const first = req.session.first;
-            const last = req.session.last;
+            const first = req.session.user.first;
+            const last = req.session.user.last;
             res.render("thanks", {
                 layout: "main",
                 title: "Thank you!",
@@ -338,6 +371,32 @@ app.get("/thanks", requireSignature, (req, res) => {
         .catch(err => console.log("err in getSigner: ", err));
 });
 
+// POST THANKS: delete signature
+app.post("/thanks", requireSignature, (req, res) => {
+    console.log("ran post thanks route");
+    const user_id = req.session.user.user_id;
+    db.deleteSignature(user_id)
+        .then(data => {
+            //deleting users signature in session
+            req.session.user.signatureId = null;
+            console.log(
+                "user object in session after deleting siggnature and timestamp",
+                req.session.user
+            );
+
+            res.redirect("/petition");
+        })
+        .catch(err => {
+            console.log("err in delet signature", err);
+            res.render("petition", {
+                layout: "main",
+                error_message: true,
+                title: "Deleting-signing-error",
+                userLogedIn: true
+            });
+        });
+});
+
 //Before you put the url a user specifies into the href attribute of a link, you must make sure that it begins with either "http://" or "https://". This is not just to ensure that the link goes somewhere outside of your site, althoug that is a benefit. It is also important for security. Since browsers support Javascript URLs, we must make sure that a malicious user can't create a link that runs Javascript code when other users click on it. You can decide whether to check the url when the user inputs it (before you insert it into the database) or when you get it out of the database (before you pass it to your template).
 //If it doesn't start with "http://" or "https://", do not put it in an href attribute.
 // GET SIGNERS : serving the list of signers
@@ -346,8 +405,8 @@ app.get("/signers", requireLoggedInUser, (req, res) => {
     db.getSigners()
         .then(data => {
             const signers = data.rows;
-            const first = req.session.first;
-            const last = req.session.last;
+            const first = req.session.user.first;
+            const last = req.session.user.last;
 
             res.render("signers", {
                 layout: "main",
@@ -365,8 +424,8 @@ app.get("/signers", requireLoggedInUser, (req, res) => {
 app.get("/signers/:city", requireLoggedInUser, (req, res) => {
     console.log("made it into signers-by-city route");
     const city = req.params.city;
-    const first = req.session.first;
-    const last = req.session.last;
+    const first = req.session.user.first;
+    const last = req.session.user.last;
     db.getSignersByCity(city)
         .then(data => {
             const signersByCity = data.rows;
@@ -391,8 +450,8 @@ app.get("/signers/:city", requireLoggedInUser, (req, res) => {
 
 //about route
 app.get("/about", (req, res) => {
-    const first = req.session.first;
-    const last = req.session.last;
+    const first = req.session.user.first;
+    const last = req.session.user.last;
 
     res.render("about", {
         layout: "main",
@@ -405,8 +464,8 @@ app.get("/about", (req, res) => {
 
 //contact route
 app.get("/contact", (req, res) => {
-    const first = req.session.first;
-    const last = req.session.last;
+    const first = req.session.user.first;
+    const last = req.session.user.last;
 
     res.render("contact", {
         layout: "main",

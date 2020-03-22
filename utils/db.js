@@ -4,12 +4,13 @@ const db = spicedPg(
         "postgres:postgres:postgres:@localhost@localhost:5432/petition"
 );
 
+//saves a signature in signatures DB
 module.exports.addSigner = (user_id, signature) => {
     const q = `
     INSERT into signatures (user_id, signature)
     VALUES ($1, $2)
     RETURNING *
-    `; // this is security stuff preventing SQL injection
+    `;
     const params = [user_id, signature];
     return db.query(q, params);
 };
@@ -75,7 +76,7 @@ exports.addProfile = (age, city, url, user_id) => {
     return db.query(q, params);
 };
 
-//GET to profile/edit: selects the user-infos to output into the input fields
+//GET to profile/edit: output users profile data into the input fields
 exports.editProfile = () => {
     const q = `SELECT
     users.id,
@@ -98,7 +99,6 @@ exports.editProfile = () => {
 //POST to profile/edit: upserting the data submitted by the user editing their profile
 exports.updateUsers = (first, last, password, id, email) => {
     // query to edit users table
-
     const q = `UPDATE users
     SET first = $1, last = $2, email = $5, password = $3
     WHERE id = $4
@@ -122,11 +122,10 @@ exports.updateUserProfiles = (age, city, url, user_id) => {
 };
 
 //LOGIN
-// Change the query that retrieves information from the users table by email address
-//so that it also gets data from the signatures table.
-//Thus you will be able to know whether the user has signed the petition or not as soon as they log in.
 exports.login = email => {
-    const q = `SELECT password, 
+    const q = `SELECT  
+    users.first,
+    users.last,
     users.id,
     users.password,
     signatures.user_id
@@ -138,15 +137,27 @@ exports.login = email => {
     return db.query(q, params);
 };
 
-// MYSELF:  JOIN is not working properly
-// SELECT singers.name AS singer_name, songs.name AS song_name
-// FROM singers
-// JOIN songs
-// ON singers.id = songs.singer_id;
+//DELETE signature from /thanks post route
+exports.deleteSignature = user_id => {
+    const q = `DELETE 
+    FROM signatures 
+    WHERE user_id = $1`;
+    const params = [user_id];
+    return db.query(q, params);
+};
+exports.countSignatures = () => {
+    const q = `SELECT COUNT (signature) 
+    FROM signatures`;
+    return db.query(q);
+};
 
-// singer_name |  song_name
-// -------------+-------------
-// Nicki Minaj | Anaconda
-// Lady Gaga   | Bad Romance
-// Lady Gaga   | Paparazzi
-// Tom Jones   | Sex Bomb
+exports.userCheckin = (first, last) => {
+    // NOT WORKING
+    const q = `SELECT 
+    first, 
+    last
+    FROM users 
+    WHERE first = $1, last = $2`;
+    const params = [first, last];
+    return db.query(q, params);
+};
