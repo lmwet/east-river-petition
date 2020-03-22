@@ -139,12 +139,13 @@ exports.login = email => {
 
 //DELETE signature from /thanks post route
 exports.deleteSignature = user_id => {
-    const q = `DELETE 
-    FROM signatures 
+    const q = `DELETE
+    FROM signatures
     WHERE user_id = $1`;
     const params = [user_id];
     return db.query(q, params);
 };
+
 exports.countSignatures = () => {
     const q = `SELECT COUNT (signature) 
     FROM signatures`;

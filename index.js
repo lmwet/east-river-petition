@@ -211,15 +211,23 @@ app.post("/profile", requireLoggedInUser, (req, res) => {
     ////////////////////////////////////////////////////////////
     //handle the fact that they are not required fields :/
     ////////////////////////////////////////////////////////////
-
-    const age = req.body.age;
-    const city = req.body.city;
-    const url = req.body.url;
     const user_id = req.session.user.user_id;
     console.log("req.session.user_id on post profile", user_id);
-    //remember the user's city for the "get users by city" rout
+
+    //remember the user's city for the "get users by city" route
+    const city = req.body.city;
     req.session.user.city = city;
-    //handle the https prefixe thingy
+
+    const age = req.body.age;
+
+    //handle the https prefixe problem
+    let url = req.body.url;
+    console.log("url post profile", url.startsWith("http://" || "https://"));
+
+    if (!url.startsWith("http://" || "https://")) {
+        url = null;
+    }
+
     db.addProfile(age, city, url, user_id)
         .then(data => {
             res.redirect("/petition");
@@ -338,12 +346,14 @@ app.post("/petition", requireNoSignature, (req, res) => {
             })
             .catch(err => {
                 console.log("err in addSigner", err);
-                res.render("petition", {
-                    layout: "main",
-                    error_message: true,
-                    title: "Petition-signing-error",
-                    userLogedIn: true
-                });
+                res.redirect("/thanks");
+
+                // render("petition", {
+                //     layout: "main",
+                //     error_message: true,
+                //     title: "Petition-signing-error",
+                //     userLogedIn: true
+                // });
             });
     } else {
         res.redirect("/thanks");
@@ -384,7 +394,7 @@ app.post("/thanks", requireSignature, (req, res) => {
                 req.session.user
             );
 
-            res.redirect("/petition");
+            res.redirect("/register");
         })
         .catch(err => {
             console.log("err in delet signature", err);

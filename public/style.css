@@ -44,6 +44,7 @@ nav ul li {
     align-items: flex-start;
     padding: 1.5%;
     list-style: none;
+    align-content: space-between;
 }
 .highlighted {
     color: #008b8b8f;
@@ -68,11 +69,6 @@ img#home-page-img {
 #home-button {
     margin-top: 14%;
 }
-ul#signers {
-    color: #008b8b8f;
-    padding: 5%;
-    margin: 3em;
-}
 section {
     margin: 4%;
     display: flex;
@@ -93,15 +89,14 @@ section {
 }
 input {
     color: #008b8b8f;
-    min-width: 8vw;
-    min-height: 3vh;
+    min-width: 25vw;
+    min-height: 4vh;
 }
 #explain {
     display: flex;
     flex-direction: column;
     padding-left: 6%;
     align-items: flex-start;
-    /* background-color: rgba(248, 248, 255, 0.913); */
 }
 .img-explain {
     flex-grow: 1;
@@ -109,9 +104,15 @@ input {
     opacity: 0.9;
     min-height: inherit;
 }
+.signers-links {
+    font-size: larger;
+    color: ghostwhite;
+    text-decoration: underline;
+}
 p {
     max-width: 80%;
-    padding: 1%;
+    padding: 2%;
+    margin: 1%;
 }
 canvas {
     border: 1px dotted blue;
@@ -135,19 +136,35 @@ footer {
     background-color: #008b8b8f;
     color: darkgray;
     padding: 1em;
-    position: absolute;
+    position: fixed;
     bottom: 0;
 }
 
 /* media queries */
 
 @media screen and (max-width: 44em) {
-    nav ul {
-        flex-direction: column;
-    }
     nav ul li {
-        align-items: flex-start;
-        padding: 1.5%;
+        align-items: center;
+        justify-content: space-around;
+        padding-top: 3%;
+        padding-bottom: 3%;
         list-style: none;
+    }
+    nav ul {
+        display: flex;
+        flex-direction: row;
+        align-items: right;
+        background-color: #008b8b8f;
+        padding-right: 3vw;
+    }
+    section {
+        margin: 4%;
+        display: block;
+        justify-content: space-evenly;
+    }
+    #home-button {
+        position: absolute;
+        bottom: 1em;
+        right: 3em;
     }
 }
