@@ -27,7 +27,7 @@ module.exports.getSigners = () => {
  FROM
     users 
  JOIN signatures ON signatures.user_id = users.id    
- JOIN user_profiles ON user_profiles.user_id = users.id;`; // = users that just signed and those who submitted a profile
+ LEFT JOIN user_profiles ON user_profiles.user_id = users.id;`; // = users that just signed and those who submitted a profile
     return db.query(q);
 };
 

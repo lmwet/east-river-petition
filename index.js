@@ -183,7 +183,8 @@ app.get("/", (req, res) => {
             res.render("home", {
                 layout: "main",
                 title: "Home",
-                count
+                count,
+                userLogedOut: true
             });
         })
         .catch(err => {
