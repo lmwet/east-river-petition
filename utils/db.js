@@ -77,7 +77,7 @@ exports.addProfile = (age, city, url, user_id) => {
 };
 
 //GET to profile/edit: output users profile data into the input fields
-exports.editProfile = () => {
+exports.editProfile = user_id => {
     const q = `SELECT
     users.id,
     users.first,
@@ -92,8 +92,9 @@ exports.editProfile = () => {
     users
  LEFT OUTER JOIN user_profiles 
  ON user_profiles.user_id = users.id
- ORDER BY users.id DESC;`;
-    return db.query(q);
+ WHERE users.id = $1;`;
+    const params = [user_id];
+    return db.query(q, params);
 };
 
 //POST to profile/edit: upserting the data submitted by the user editing their profile

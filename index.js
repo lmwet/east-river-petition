@@ -27,7 +27,6 @@ app.use(
     })
 );
 
-// DONT CHANGE ORDER INHERE!
 app.use(
     cookieSession({
         secret: `secretssss`,
@@ -36,8 +35,6 @@ app.use(
 );
 
 app.use(csurf());
-
-//SHOULD I HANDLE THE LOG IN / OUT WITH MIDDLEWARE FUNCTIONS?
 app.use(makeCookiesSafe);
 
 ////////////////////////////////////// REGISTER AND LOGIN //////////////////////////////////////
@@ -243,7 +240,8 @@ app.post("/profile", requireLoggedInUser, (req, res) => {
 app.get("/profile/edit", requireLoggedInUser, (req, res) => {
     console.log("profile/edit route runnin");
 
-    db.editProfile()
+    const user_id = req.session.user.user_id;
+    db.editProfile(user_id)
         .then(data => {
             const first = req.session.user.first;
             const last = req.session.user.last;
@@ -332,29 +330,21 @@ app.post("/petition", requireNoSignature, (req, res) => {
     if (!req.session.user.signatureId) {
         db.addSigner(user_id, signature)
             .then(data => {
-                //setting cookie to remember the users signature
                 req.session.user.signatureId = data.rows[0].id;
                 console.log(
                     "user object in session in addSigner after signatureId",
                     req.session.user
                 );
+                res.redirect("/thanks");
+            })
+            .catch(err => {
+                console.log("err in addSigner", err);
                 res.render("petition", {
                     layout: "main",
                     error_message: true,
                     title: "Petition-signing-error",
                     userLogedIn: true
                 });
-            })
-            .catch(err => {
-                console.log("err in addSigner", err);
-                res.redirect("/thanks");
-
-                // render("petition", {
-                //     layout: "main",
-                //     error_message: true,
-                //     title: "Petition-signing-error",
-                //     userLogedIn: true
-                // });
             });
     } else {
         res.redirect("/thanks");

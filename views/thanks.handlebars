@@ -2,10 +2,10 @@
         {{!-- <img id="home-page-img" src="/summer.png"> --}}
     {{> navbar }}
     <section>
-  <h1> You have successfully signed the petition. Thanks a lot!</h1></br>
+  <h2> You have successfully signed the petition. Thanks a lot!</h2></br>
       <img src='{{signatureGraph}}'>
 
-    <h1><a href="/signers">See All Signers Here</a></h1>
+    <h2><a href="/signers">See All Signers Here</a></h2>
     <form method="post" id="delete-signature">
             {{!-- security inportant for all forms --}}
   <input type="hidden" name="_csrf" value="{{csrfToken}}">
