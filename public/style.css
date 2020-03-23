@@ -65,6 +65,7 @@ img#home-page-img {
     z-index: -150;
     position: fixed;
     top: 0;
+    left: 0;
 }
 #home-button {
     margin-top: 14%;
@@ -144,18 +145,19 @@ footer {
 
 @media screen and (max-width: 44em) {
     nav ul li {
-        align-items: center;
+        align-items: left;
         justify-content: space-around;
         padding-top: 3%;
         padding-bottom: 3%;
+        margin: 1%;
         list-style: none;
     }
     nav ul {
         display: flex;
+        flex-wrap: wrap;
         flex-direction: row;
-        align-items: right;
+        align-items: left;
         background-color: #008b8b8f;
-        padding-right: 3vw;
     }
     section {
         margin: 4%;
@@ -163,8 +165,20 @@ footer {
         justify-content: space-evenly;
     }
     #home-button {
-        position: absolute;
-        bottom: 1em;
-        right: 3em;
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        margin: 0;
+        padding: 1.3em;
+    }
+    img#home-page-img {
+        min-height: 100vh;
+        min-width: 100vw;
+        margin: 0;
+    }
+    canvas {
+        max-width: 70vw;
+        border: 1px dotted blue;
+        margin: 3%;
     }
 }
